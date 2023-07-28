@@ -1,0 +1,10 @@
+channels:
+ - conda-forge
+ - bioconda
+depenencies:
+ - r-base=4.1
+ - r-phangorn=2.4.0
+ - r-ape=5.7
+ - r-dplyr
+ - r-tidyr
+ - r-tidyverse

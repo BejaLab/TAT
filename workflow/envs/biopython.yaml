@@ -1,0 +1,7 @@
+channels:
+ - conda-forge
+ - anaconda
+ - bioconda
+dependencies:
+ - biopython=1.81
+ - pandas=1.5.3

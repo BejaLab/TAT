@@ -1,0 +1,4 @@
+channels:
+ - bioconda
+dependencies:
+ - newick_utils=1.6

@@ -1,0 +1,196 @@
+
+configfile: "config.yaml"
+
+rule all:
+    input:
+        ""
+
+rule get_gtdb_metadata:
+    output:
+        "analysis/metadata/gtdb.tsv"
+    params:
+        url = config['gtdb']['metadata']
+    shell:
+        "curl -sL {params.url} | gzip -cd > {output}"
+
+rule get_gtdb_tree:
+    output:
+        "analysis/metadata/gtdb_tree.nwk"
+    params:
+        url = config['gtdb']['tree']
+    shell:
+        "curl -sL {params.url} > {output}"
+
+rule gtdb_clade:
+    input:
+        "analysis/metadata/gtdb_tree.nwk"
+    output:
+        clade = "analysis/metadata/gtdb_clade.nwk",
+        tips = "analysis/metadata/gtdb_representatives.txt"
+    params:
+        taxon = config['taxon']
+    conda:
+        "envs/r.yaml"
+    script:
+        "scripts/get_gtdbtk_clade.R"
+
+rule get_oceandna_metadata:
+    output:
+        "analysis/metadata/oceandna.tsv"
+    params:
+        url = config['oceandna']['metadata'],
+        file = config['oceandna']['metadata_file']
+    shell:
+        "curl -sL {params.url} | tar xfz - {params.file} -O > {output}"
+
+rule dload_lanclos_metadata:
+    output:
+        "analysis/metadata/lanclos.xlsx"
+    params:
+        url = config['lanclos']['metadata']
+    shell:
+        "curl -sL {params.url} > {output}"
+
+rule dload_oceandna_repr:
+    output:
+        "analysis/oceandna_data/"
+    params:
+        url = ""
+    shell:
+        "wget -O {output} {params.url}"
+
+rule get_lanclos_metadata:
+    input:
+        "analysis/metadata/lanclos.xlsx"
+    output:
+        "analysis/metadata/lanclos.tsv"
+    conda:
+        "envs/xlsx2csv.yaml"
+    shell:
+        "xlsx2csv -s 1 -d tab {input} {output}"
+
+rule get_lanclos_genomes:
+    output:
+        "analysis/metadata/lanclos_genomes.zip"
+    params:
+        url = config['lanclos']['genomes']
+    shell:
+        "curl -sL {params.url} > {output}"
+
+checkpoint filter_gtdb:
+    input:
+        tsv = "analysis/metadata/gtdb.tsv",
+        txt = "analysis/metadata/gtdb_representatives.txt"
+    output:
+        tsv = "analysis/metadata/gtdb_filtered.tsv",
+        dir = directory("analysis/gtdb_json/")
+    params:
+        genera = config['genera']
+    conda:
+        "envs/biopython.yaml"
+    script:
+        "scripts/filter_gtdb.py"
+
+def chosen_oceandna_diamond(w):
+    with checkpoints.filter_oceandna.get().output[0].open() as file:
+        accs = [ line.split()[0] for line in file ]
+    return expand("analysis/diamond/oceandna/{acc}.outfmt6", acc = accs)
+
+def chosen_lanclos_diamond(w):
+    with checkpoints.filter_lanclos.get().output[0].open() as file:
+        accs = [ line.split()[0] for line in file ]
+    return expand("analysis/diamond/lanclos/{acc}.outfmt6", acc = accs)
+
+def chosen_gtdb_diamond(w):
+    with checkpoints.filter_gtdb.get().output['tsv'].open() as file:
+        accs = [ line.split()[0] for line in file ]
+    return expand("analysis/diamond/gtdb/{acc}.outfmt6", acc = accs)
+
+rule diamond:
+    input:
+        query = "input/rhodopsins.faa",
+        db = "analysis/proteins/{source}/{acc}.faa"
+    output:
+        "analysis/diamond/{source}/{acc}.outfmt6"
+    conda:
+        "envs/diamond.yaml"
+    shell:
+        "diamond blastp -k 0 --sensitive --db {input.db} --query {input.query} --out {output} --outfmt 6"
+
+rule prodigal:
+    input:
+        "analysis/genomes/{source}/{acc}.fna"
+    output:
+        faa = "analysis/proteins/{source}/{acc}.faa",
+        gff = "analysis/proteins/{source}/{acc}.gff"
+    shadow:
+        "minimal"
+    conda:
+        "envs/prodigal.yaml"
+    shell:
+        "prodigal -i {input} -a {output.faa} -f gff o {output.gff}"
+
+rule collect_diamond:
+    input:
+        chosen_gtdb_diamond,
+        chosen_lanclos_diamond,
+        chosen_oceandna_diamond
+    output:
+        "analysis/diamond.ok"
+    shell:
+        "cat {input} > {output}"
+
+checkpoint filter_lanclos:
+    input:
+        "analysis/metadata/lanclos.tsv"
+    output:
+        "analysis/metadata/lanclos_filtered.tsv"
+    params:
+        genera = config['genera']
+    conda:
+        "envs/biopython.yaml"
+    script:
+        "scripts/filter_lanclos.py"
+
+checkpoint filter_oceandna:
+    input:
+        oceandna = "analysis/metadata/oceandna.tsv",
+        gtdb = "analysis/metadata/gtdb_filtered.tsv"
+    output:
+        "analysis/metadata/oceandna_filtered.tsv"
+    params:
+        genera = config['genera']
+    conda:
+        "envs/biopython.yaml"
+    script:
+        "scripts/filter_oceandna.py"
+
+rule get_gtdb_genome:
+    input:
+        "analysis/gtdb_json/"
+    output:
+        "analysis/genomes/gtdb/{acc}.fna"
+    params:
+        json = "analysis/gtdb_json/{acc}_assembly.json"
+    resources:
+        ncbi = 1
+    conda:
+        "envs/biopython.yaml"
+    script:
+        "scripts/get_assembly.py"
+
+rule get_oceandna_genome:
+    input:
+        "data/oceandna"
+    output:
+        "analysis/genomes/oceandna/{acc}.fna"
+    shell:
+        "find -L {input} -name {wildcards.acc}.fa.gz | xargs gzip -cd > {output}"
+
+rule get_lanclos_genome:
+    input:
+        "analysis/metadata/lanclos_genomes.zip"
+    output:
+        "analysis/genomes/lanclos/{acc}.fna"
+    shell:
+        "unzip -p {input} {wildcards.acc}.fna > {output}"

@@ -1,0 +1,6 @@
+channels:
+ - anaconda
+dependencies:
+ - pip
+ - pip:
+   - xlsx2csv==0.8.1
