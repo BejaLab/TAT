@@ -3,7 +3,7 @@ configfile: "config.yaml"
 
 rule all:
     input:
-        ""
+        expand("analysis/diamond_collect/{source}.tsv", source = [ "lanclos", "gtdb", "oceandna" ])
 
 rule get_gtdb_metadata:
     output:
@@ -91,24 +91,47 @@ checkpoint filter_gtdb:
     script:
         "scripts/filter_gtdb.py"
 
-def chosen_oceandna_diamond(w):
+def chosen_diamond(w):
+    if w.source == "oceandna":
+        tsv = checkpoints.filter_oceandna.get().output[0]
+    elif w.source == "lanclos":
+        tsv = checkpoints.filter_lanclos.get().output[0]
+    elif w.source == "gtdb":
+        tsv = checkpoints.filter_gtdb.get().output['tsv']
+    with tsv.open() as file:
+        accs = [ line.split()[0] for line in file ]
+    return expand("analysis/diamond/{source}/{acc}.outfmt6", source = w.source, acc = accs)
+
+def chosen_faa_IIIa(w):
+    files = []
     with checkpoints.filter_oceandna.get().output[0].open() as file:
         accs = [ line.split()[0] for line in file ]
-    return expand("analysis/diamond/oceandna/{acc}.outfmt6", acc = accs)
-
-def chosen_lanclos_diamond(w):
+        files += expand("analysis/proteins/oceandna/{acc}.faa", acc = accs)
     with checkpoints.filter_lanclos.get().output[0].open() as file:
         accs = [ line.split()[0] for line in file ]
-    return expand("analysis/diamond/lanclos/{acc}.outfmt6", acc = accs)
-
-def chosen_gtdb_diamond(w):
+        files += expand("analysis/proteins/lanclos/{acc}.faa", acc = accs)
     with checkpoints.filter_gtdb.get().output['tsv'].open() as file:
-        accs = [ line.split()[0] for line in file ]
-    return expand("analysis/diamond/gtdb/{acc}.outfmt6", acc = accs)
+        accs = []
+        genera = list(config['genera'].values()) + [ config['outgroup'] ]
+        for line in file:
+            acc, taxonomy, biosamples = line.split('\t')
+            for genus in genera:
+                if f"{genus};" in taxonomy:
+                    accs.append(acc)
+        files += expand("analysis/proteins/gtdb/{acc}.faa", acc = accs)
+    return files
+
+rule cat_queries:
+    input:
+        "input/TAT.faa", "input/PR.faa"
+    output:
+        "analysis/diamond/queries.faa"
+    shell:
+        "cat {input} > {output}"
 
 rule diamond:
     input:
-        query = "input/rhodopsins.faa",
+        query = "analysis/diamond/queries.faa",
         db = "analysis/proteins/{source}/{acc}.faa"
     output:
         "analysis/diamond/{source}/{acc}.outfmt6"
@@ -128,17 +151,20 @@ rule prodigal:
     conda:
         "envs/prodigal.yaml"
     shell:
-        "prodigal -i {input} -a {output.faa} -f gff o {output.gff}"
+        "prodigal -i {input} -a {output.faa} -f gff -o {output.gff}"
 
 rule collect_diamond:
     input:
-        chosen_gtdb_diamond,
-        chosen_lanclos_diamond,
-        chosen_oceandna_diamond
+        chosen_diamond
     output:
-        "analysis/diamond.ok"
-    shell:
-        "cat {input} > {output}"
+        "analysis/diamond_collect/{source}.tsv"
+    params:
+        evalue = 1e-10,
+        pident = 48
+    conda:
+        "envs/r.yaml"
+    script:
+        "scripts/collect_diamond.R"
 
 checkpoint filter_lanclos:
     input:
@@ -194,3 +220,37 @@ rule get_lanclos_genome:
         "analysis/genomes/lanclos/{acc}.fna"
     shell:
         "unzip -p {input} {wildcards.acc}.fna > {output}"
+
+rule gtdb_tree:
+    input:
+        diamond = "analysis/diamond_collect/gtdb.tsv",
+        tree = "analysis/metadata/gtdb_clade.nwk"
+    output:
+        "output/gtdb.pdf"
+    conda:
+        "envs/r.yaml"
+    script:
+        "scripts/plot_gtdb.R"
+
+rule phylophlan_input:
+    input:
+        chosen_faa_IIIa
+    output:
+        directory("analysis/IIIa")
+    shell:
+        "mkdir {output} && cp {input} {output}/"
+
+# NB: usearch not under conda
+rule phylophlan:
+    input:
+        work_dir = "analysis/IIIa",
+        cfg = "metadata/phylophlan.cfg",
+        maas = "metadata/phylophlan.tsv"
+    output:
+        treefile = "analysis/IIIa_phylophlan/IIIa.tre.treefile"
+    conda:
+        "envs/phylophlan.yaml"
+    threads:
+        workflow.cores
+    shell:
+        "phylophlan -i {input.work_dir} -t a -f {input.cfg} --diversity low --subsample full -d phylophlan --nproc {threads} --output_folder analysis --verbose --maas {input.maas}"
