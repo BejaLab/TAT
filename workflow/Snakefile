@@ -1,9 +1,12 @@
 
 configfile: "config.yaml"
 
+sources = [ "oceandna", "gtdb", "lanclos" ]
+
 rule all:
     input:
-        expand("analysis/diamond_collect/{source}.tsv", source = [ "lanclos", "gtdb", "oceandna" ])
+        "output/gtdb.pdf",
+        "output/phylophlan.pdf"
 
 rule get_gtdb_metadata:
     output:
@@ -104,30 +107,34 @@ def chosen_diamond(w):
 
 def chosen_faa_IIIa(w):
     files = []
+    ext = 'cds' if w and w.ext == 'cds' else 'faa'
     with checkpoints.filter_oceandna.get().output[0].open() as file:
         accs = [ line.split()[0] for line in file ]
-        files += expand("analysis/proteins/oceandna/{acc}.faa", acc = accs)
+        files += expand("analysis/proteins/oceandna/{acc}.{ext}", acc = accs, ext = ext)
     with checkpoints.filter_lanclos.get().output[0].open() as file:
         accs = [ line.split()[0] for line in file ]
-        files += expand("analysis/proteins/lanclos/{acc}.faa", acc = accs)
+        files += expand("analysis/proteins/lanclos/{acc}.{ext}", acc = accs, ext = ext)
     with checkpoints.filter_gtdb.get().output['tsv'].open() as file:
         accs = []
-        genera = list(config['genera'].values()) + [ config['outgroup'] ]
+        genera = list(config['genera'].values()) + list(config['outgroup'].values())
         for line in file:
             acc, taxonomy, biosamples = line.split('\t')
             for genus in genera:
                 if f"{genus};" in taxonomy:
                     accs.append(acc)
-        files += expand("analysis/proteins/gtdb/{acc}.faa", acc = accs)
+        files += expand("analysis/proteins/gtdb/{acc}.{ext}", acc = accs, ext = ext)
     return files
 
 rule cat_queries:
     input:
-        "input/TAT.faa", "input/PR.faa"
+        TAT = "analysis/TAT/ingroup.faa",
+        PR = "input/PR.faa"
     output:
         "analysis/diamond/queries.faa"
+    conda:
+        "envs/tools.yaml"
     shell:
-        "cat {input} > {output}"
+        "(seqkit replace -p ^ -r TAT_ {input.TAT}; seqkit replace -p ^ -r PR_ {input.PR}) > {output}"
 
 rule diamond:
     input:
@@ -145,13 +152,14 @@ rule prodigal:
         "analysis/genomes/{source}/{acc}.fna"
     output:
         faa = "analysis/proteins/{source}/{acc}.faa",
+        cds = "analysis/proteins/{source}/{acc}.cds",
         gff = "analysis/proteins/{source}/{acc}.gff"
     shadow:
         "minimal"
     conda:
         "envs/prodigal.yaml"
     shell:
-        "prodigal -i {input} -a {output.faa} -f gff -o {output.gff}"
+        "prodigal -i {input} -a {output.faa} -d {output.cds} -f gff -o {output.gff}"
 
 rule collect_diamond:
     input:
@@ -165,6 +173,194 @@ rule collect_diamond:
         "envs/r.yaml"
     script:
         "scripts/collect_diamond.R"
+
+rule get_TAT:
+    input:
+        tsv = expand("analysis/diamond_collect/{source}.tsv", source = sources),
+        fasta = chosen_faa_IIIa
+    output:
+        "analysis/TAT/genomes.{ext}"
+    conda:
+        "envs/tools.yaml"
+    shell:
+        "grep -h TAT {input.tsv} | parallel --colsep \\\\t seqkit grep -p {{3}} analysis/proteins/*/{{1}}.{wildcards.ext} \| seqkit replace -p ^ -r {{1}}@ > {output}"
+
+rule translate_ingroup:
+    input:
+        "input/ingroup.fna"
+    output:
+        "analysis/TAT/ingroup.faa"
+    conda:
+        "envs/tools.yaml"
+    shell:
+        "seqkit translate -o {output} {input}"
+
+rule cat_TAT:
+    input:
+        "analysis/TAT/ingroup.faa",
+        "analysis/TAT/genomes.cdhit"
+    output:
+        "analysis/TAT/TwR.faa"
+    params:
+        m = 220
+    conda:
+        "envs/tools.yaml"
+    shell:
+        "seqkit seq -im {params.m} {input} | seqkit rmdup | seqkit rmdup -s -o {output}"
+
+rule cdhit_TAT:
+    input:
+        "analysis/TAT/genomes.faa"
+    output:
+        faa = "analysis/TAT/genomes.cdhit",
+        clstr = "analysis/TAT/genomes.cdhit.clstr"
+    params:
+        c = 0.98
+    conda:
+        "envs/cdhit.yaml"
+    shell:
+        "cd-hit -i {input} -o {output.faa} -c {params.c} -d 0"
+
+rule mafft_TAT:
+    input:
+        "analysis/TAT/TwR.faa"
+    output:
+        "analysis/TAT/TwR.mafft"
+    conda:
+        "envs/mafft.yaml"
+    shell:
+        "mafft --reorder --localpair --maxiterate 1000 {input} > {output}"
+
+rule mafft_rhodopsins:
+    input:
+        "analysis/TAT/TwR.faa",
+        "input/outgroups.faa"
+    output:
+        "analysis/TAT/rhodopsins.mafft"
+    conda:
+        "envs/mafft.yaml"
+    shell:
+        "cat {input} | mafft --reorder --localpair --maxiterate 1000 - > {output}"
+
+rule cat_cds:
+    input:
+        "input/ingroup.fna",
+        "analysis/TAT/genomes.cds"
+    output:
+        "analysis/TAT/TwR.cds"
+    shell:
+        "cat {input} > {output}"
+
+rule backtrans:
+    input:
+        mafft = "analysis/TAT/TwR.mafft",
+        codons = "analysis/TAT/TwR.cds"
+    output:
+        "analysis/TAT/TwR.mafft.cds"
+    conda:
+        "envs/trimal.yaml"
+    shell:
+        "trimal -splitbystopcodon -backtrans {input.codons} -in {input.mafft} -out {output}"
+
+rule codon_trim:
+    input:
+        "analysis/TAT/TwR.mafft.cds"
+    output:
+        "analysis/TAT/TwR.mafft.cds.trim_unfixednames"
+    params:
+        gt = 0.5
+    conda:
+        "envs/trimal.yaml"
+    shell:
+        "trimal -in {input} -out {output} -gt {params.gt}"
+
+rule fix_names:
+    input:
+        "analysis/TAT/TwR.mafft.cds.trim_unfixednames"
+    output:
+        "analysis/TAT/TwR.mafft.cds.trim"
+    shell:
+        "tr @ _ < {input} > {output}"
+
+rule codon_iqtree:
+    input:
+        "analysis/TAT/TwR.mafft.cds.trim"
+    output:
+        "analysis/TAT/TwR.mafft.cds.trim.treefile"
+    params:
+        seed = 123,
+        B = 1000
+    threads:
+        4
+    conda:
+        "envs/iqtree.yaml"
+    shell:
+        "iqtree2 -seed {params.seed} -s {input} -st CODON -B {params.B} -T {threads} -redo"
+
+rule root_digger:
+    input:
+        fasta = "analysis/TAT/TwR.mafft.cds.trim",
+        tree  = "analysis/TAT/TwR.mafft.cds.trim.raxml.bestTree",
+        model = "analysis/TAT/TwR.mafft.cds.trim.raxml.bestModel"
+    output:
+        "analysis/TAT/root_digger/TwR.mafft.cds.trim.raxml.bestTree.lwr.tree",
+        "analysis/TAT/root_digger/TwR.mafft.cds.trim.raxml.bestTree.rooted.tree"
+    params:
+        dir = "analysis/TAT/root_digger"
+    threads:
+        30
+    shadow:
+        "minimal"
+    log:
+        "analysis/TAT/root_digger/TwR.mafft.cds.trim.raxml.bestTree.log"
+    shell:
+        """
+        rd --msa {input.fasta} --tree {input.tree} --exhaustive --threads {threads} &> {log}
+        mv {input.tree}.lwr.tree {input.tree}.rooted.tree {params.dir}/
+        """
+
+rule raxml_evaluate:
+    input:
+        fasta  = "analysis/TAT/TwR.mafft.cds.trim",
+        iqtree = "analysis/TAT/TwR.mafft.cds.trim.treefile"
+    output:
+        "analysis/TAT/TwR.mafft.cds.trim.raxml.bestTree",
+        "analysis/TAT/TwR.mafft.cds.trim.raxml.bestModel"
+    params:
+        seed = 123,
+        model = "GTR+G"
+    log:
+        "analysis/TAT/TwR.mafft.cds.trim.raxml.log"
+    conda:
+        "envs/raxml-ng.yaml"
+    shell:
+        "raxml-ng --redo --evaluate --msa {input.fasta} --tree {input.iqtree} --model {params.model} --seed {params.seed} &> {log}"
+
+rule trimal_rhodopsins:
+    input:
+        "analysis/TAT/rhodopsins.mafft"
+    output:
+        "analysis/TAT/rhodopsins.trimal"
+    params:
+        gt = 0.1
+    conda:
+        "envs/trimal.yaml"
+    shell:
+        "trimal -in {input} -out {output} -gt {params.gt}"
+
+rule iqtree_rhodopsins:
+    input:
+        "analysis/TAT/rhodopsins.trimal"
+    output:
+        "analysis/TAT/rhodopsins.trimal.treefile"
+    params:
+        seed = 123
+    conda:
+        "envs/iqtree.yaml"
+    threads:
+        4
+    shell:
+        "iqtree2 -s {input} -redo --alrt 1000 -B 1000 --seed {params.seed} -T {threads}"
 
 checkpoint filter_lanclos:
     input:
@@ -223,10 +419,14 @@ rule get_lanclos_genome:
 
 rule gtdb_tree:
     input:
-        diamond = "analysis/diamond_collect/gtdb.tsv",
+        genes = "analysis/diamond_collect/gtdb.tsv",
+        lanclos = "analysis/metadata/lanclos.tsv",
+        gtdb = "analysis/metadata/gtdb_filtered.tsv",
         tree = "analysis/metadata/gtdb_clade.nwk"
     output:
         "output/gtdb.pdf"
+    params:
+        dist = 0.1
     conda:
         "envs/r.yaml"
     script:
@@ -254,3 +454,21 @@ rule phylophlan:
         workflow.cores
     shell:
         "phylophlan -i {input.work_dir} -t a -f {input.cfg} --diversity low --subsample full -d phylophlan --nproc {threads} --output_folder analysis --verbose --maas {input.maas}"
+
+rule phylophlan_tree:
+    input:
+        tree = "analysis/IIIa_phylophlan/IIIa.tre.treefile",
+        genes = expand("analysis/diamond_collect/{source}.tsv", source = sources),
+        gtdb = "analysis/metadata/gtdb_filtered.tsv",
+        lanclos = "analysis/metadata/lanclos.tsv",
+        oceandna = "analysis/metadata/oceandna_filtered.tsv"
+    output:
+        "output/phylophlan.pdf"
+    params:
+        genera = config['genera'],
+        outgroup = config['outgroup'],
+        show_labels = "LSUCC|HIMB114|IMCC9063"
+    conda:
+        "envs/r.yaml"
+    script:
+        "scripts/plot_phylophlan.R"

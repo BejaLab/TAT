@@ -1,0 +1,6 @@
+channels:
+ - conda-forge
+ - bioconda
+dependencies:
+ - parallel=20230722
+ - seqkit=2.5.0

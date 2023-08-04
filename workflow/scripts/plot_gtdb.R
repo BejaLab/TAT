@@ -7,11 +7,15 @@ library(ggplot2)
 library(tibble)
 library(igraph)
 
-tsv_file <- snakemake@input["tsv"]
-tree_file <- snakemake@input["tree"]
+with(snakemake@input, {
+    gtdb_file <<- gtdb
+    lanclos_file <<- lanclos
+    genes_file <<- genes
+    tree_file <<- tree
+})
 output_file <- unlist(snakemake@output)
 
-# dist_threshold <- 0.1
+dist_threshold <- snakemake@params["dist"]
 
 #genes_file <- "analysis/diamond_collect/gtdb.tsv"
 #tree_file <- "analysis/metadata/gtdb_clade.nwk"
@@ -85,22 +89,24 @@ to_treedata <- function(tree) {
 }
 
 full_tree <- read.tree(tree_file)
-#keep_labels <- cophenetic(full_tree) %>%
-#    as.data.frame %>%
-#    rownames_to_column(var = "A") %>%
-#    pivot_longer(cols = -A, names_to = "B", values_to = "distance") %>%
-#    filter(A <= B, distance <= dist_threshold) %>%
-#    graph_from_data_frame(directed = F) %>%
-#    clusters %>%
-#    with(data.frame(label = names(membership), cluster = membership)) %>%
-#    distinct(cluster, .keep_all = T) %>%
-#    pull(label)
+keep_labels <- cophenetic(full_tree) %>%
+    as.data.frame %>%
+    rownames_to_column(var = "A") %>%
+    pivot_longer(cols = -A, names_to = "B", values_to = "distance") %>%
+    mutate(genome = substring(A, 4)) %>%
+    left_join(taxonomy, by = "genome") %>%
+    filter(A <= B, genus == "Pelagibacter" & distance <= dist_threshold | distance == 0) %>%
+    graph_from_data_frame(directed = F) %>%
+    clusters %>%
+    with(data.frame(label = names(membership), cluster = membership)) %>%
+    distinct(cluster, .keep_all = T) %>%
+    pull(label)
 
-#tree <- keep.tip(full_tree, keep_labels) %>%
-tree <- full_tree %>%
+tree <- keep.tip(full_tree, keep_labels) %>%
+#tree <- full_tree %>%
     as_tibble %>%
     mutate(label = gsub("'", "", label)) %>%
-    separate(label, into = c("support", "label"), sep = "-", extra = "merge", fill = "left") %>%
+    separate(label, into = c("support", "label"), sep = "-", extra = "merge", fill = "left", convert = T) %>%
     mutate(label = ifelse(node %in% parent, label, substring(label, 4))) %>%
     #mutate(genus = ifelse(grepl("g__", label), label, NA)) %>%
     extract(label, into = "acc", regex = "_(\\d+)", remove = F) %>%
@@ -109,6 +115,7 @@ tree <- full_tree %>%
 
 p <- ggtree(to_treedata(tree), layout = "rectangular") +
     geom_facet(aes(x = x, color = gene), genes, geom_tile, "genes") +
+    geom_point2(aes(subset = !is.na(support) & support >= 90, x = branch), color = "gray", size = 1) +
     geom_cladelab(mapping = aes(subset = !is.na(clade_mrca), node = node, label = clade_mrca), offset = 0.1) +
     geom_treescale() +
     theme(

@@ -1,0 +1,6 @@
+channels:
+ - conda-forge
+ - bioconda
+dependencies:
+ - raxml-ng=1.0.1
+ - epa-ng=0.3.8
