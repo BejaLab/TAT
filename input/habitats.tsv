@@ -1,0 +1,31 @@
+label	biosample	region	location	habitat	type	latitude	longigute	salinity	sra	notes
+SAMEA2623116_2556763	SAMEA2623116			open sea	euhaline	35.3671	-127.7422	33.099008		
+SAMEA2623116_2402565_6	SAMEA2623116			open sea	euhaline	35.3671	-127.7422	33.099008		
+SAMEA2619766_9993_9	SAMEA2619766	Mediterranean Sea		open sea	euhaline	39.3599	19.4084	38.182917		
+SAMEA2619766_6745_13	SAMEA2619766	Mediterranean Sea		open sea	euhaline	39.3599	19.4084	38.182917		
+OM-RGC.v2.015137236.2	SAMEA4397472	Arctic Ocean	Kara Sea	open sea	polyhaline	74.7997	76.0879	22.047506		
+OM-RGC.v2.012951039	SAMEA4398067	Arctic Ocean		open sea	euhaline	74.335	-85.5414	31.947283		
+OM-RGC.v2.012943790	SAMEA4397426			open sea	euhaline	77.3025	73.2438	34.056675		
+OceanDNA-b25685@OceanDNA-b25685_00021_13	SAMN13674978	Antarctic		open sea	euhaline	-67.76	-89.29	Oceanic	SRR10912795,SRR10912794	
+OceanDNA-b25675@OceanDNA-b25675_00042_6	SAMN06264407	North Atlantic	North Sea	open sea	euhaline	54.1883	7.9	31.25	SRR5822128	
+OceanDNA-b25669@OceanDNA-b25669_00224_1	SAMN06266121	North Atlantic	North Sea	open sea	euhaline	54.1883	7.9	32.62	SRR5821828	
+OceanDNA-b25655@OceanDNA-b25655_00050_1	SAMN06264411	North Atlantic	North Sea	open sea	euhaline	54.1883	7.9	31.62	SRR5821671	
+OceanDNA-b25652@OceanDNA-b25652_00061_3	SAMN06267310	North Atlantic	North Sea	open sea	euhaline	54.1883	7.9	33.19	SRR5821656	
+OceanDNA-b25634@OceanDNA-b25634_00100_1	SAMEA104408592	North Atlantic	Skagerrak	coastal	polyhaline	58.1323	10	28.05	ERR2206751	
+OceanDNA-b25627@OceanDNA-b25627_00009_2	SAMN09302812	North Atlantic	Baltic Sea	brackish	mesohaline	56.93	17.06	-	SRR7253999	
+OceanDNA-b25618@OceanDNA-b25618_00192_3	SAMN03351363	North Atlantic	Baltic Sea	brackish	mesohaline	56.9308	17.0607	6.7	SRR2053303	
+OceanDNA-b25535@OceanDNA-b25535_00008_3	SAMEA2591122	Mediterranean Sea		open sea	euhaline	33.9268	32.772	39.255952	ERR318618,ERR318619,ERR318620,ERR318621	
+OceanDNA-b25529@OceanDNA-b25529_00008_3	SAMEA104210876	North Pacific		open sea	euhaline	33.55	-118.4	-	ERR2094678	
+OceanDNA-b25524@OceanDNA-b25524_00164_3	SAMEA4699809	Mediterranean Sea		open sea	euhaline	42.52	3.18	37.826	ERR2604103	
+OceanDNA-b25514@OceanDNA-b25514_00056_3	SAMEA2621812	South Pacific Ocean		open sea	euhaline	-33.8718	-73.0452	34.267975	ERR598965	
+OceanDNA-b25508@OceanDNA-b25508_00154_3	SAMN08714535	North Pacific		?	polyhaline	22.43	114.28	-	SRR6873786	
+OceanDNA-b25506@OceanDNA-b25506_00047_5	SAMN08714535	North Pacific		?	euhaline	22.34	114.27	-	SRR6873777	
+OceanDNA-b25473@OceanDNA-b25473_00017_5	SAMEA2620542	Indian Ocean		open sea	euhaline	-17.0978	53.9788	34.566667	ERR599098,ERR599139	
+GCA_008638045.1@VTPH01000016.1_3	SAMN12628526	North Atlantic	Delaware Bay	estuarine	polyhaline	39.134	-75.2287			
+GCA_002691705.1@NZIR01000010.1_42	SAMN07619618	Mediterranean Sea		open sea	euhaline					
+GCA_000163555.2@EMH79960.1	SAMN02436217	North Pacific	Kaneohe Bay	coastal	euhaline	21.43635	-157.7773667			
+ECO62707.1	SAMN02954345	South Pacific Ocean	Galapagos	open sea	euhaline	-1.221	-90.32293333	34		/length=1757 /full_length=1757  /assembly_id=JCVI_ASM_feb03_2005_GS-28 /sample_id=JCVI_SMPL_1103283000033 /sample_name=GS028 /number_of_sites=1 /site_id_1=JCVI_SITE_GS028 /location_1="Coastal Floreana" /region_1="Galapagos Islands" /country_1=Ecuador /site_depth_1="2 m" /annual_chlorophyll_density_1="0.35+/-0.02 mg/M3" /chlorophyll_density_1="0.35 mg/M3" /water_depth_1="156 m" /ip_notice="This genetic information downloaded from http://camera.calit2.net may be considered to be part of the genetic patrimony of Ecuador, the country from which the sample was obtained. Users of this information agree to: (1) acknowledge Ecuador as the country of origin in any publications where the genetic information is presented and (2) contact the CBD focal point identified on the CBD website (http://www.biodiv.org/doc/info-centre.shtml) if they intend to use the genetic information for commercial purposes."
+EBU83961.1	SAMN02954345	South Pacific Ocean	Galapagos	open sea	euhaline	-1.221	-90.32293333	34		/length=1854 /full_length=1854  /assembly_id=JCVI_ASM_feb03_2005_GS-28 /sample_id=JCVI_SMPL_1103283000033 /sample_name=GS028 /number_of_sites=1 /site_id_1=JCVI_SITE_GS028 /location_1="Coastal Floreana" /region_1="Galapagos Islands" /country_1=Ecuador /site_depth_1="2 m" /annual_chlorophyll_density_1="0.35+/-0.02 mg/M3" /chlorophyll_density_1="0.35 mg/M3" /water_depth_1="156 m" /ip_notice="This genetic information downloaded from http://camera.calit2.net may be considered to be part of the genetic patrimony of Ecuador, the country from which the sample was obtained. Users of this information agree to: (1) acknowledge Ecuador as the country of origin in any publications where the genetic information is presented and (2) contact the CBD focal point identified on the CBD website (http://www.biodiv.org/doc/info-centre.shtml) if they intend to use the genetic information for commercial purposes."
+EBO12744.1	SAMN02954345	North Atlantic	Chesapeake Bay	coastal	euhaline	38.96033333	-76.43	33.1		/length=1318 /full_length=1318  /assembly_id=JCVI_ASM_feb03_2005_GS-12 /sample_id=JCVI_SMPL_1103283000018 /sample_name=GS012 /number_of_sites=1 /site_id_1=JCVI_SITE_GS012 /location_1="Chesapeake Bay, MD" /region_1="North American East Coast" /country_1=USA /site_depth_1="13.2 m" /annual_chlorophyll_density_1="15.0+/-1.01 mg/M3" /chlorophyll_density_1="21.0 mg/M3" /salinity_1="3.5 ppt" /temperature_1="1 C" /water_depth_1="25 m"
+OceanDNA-b25611@OceanDNA-b25611_00006_13	SAMN03351396	North Atlantic	Baltic Sea	brackish	mesohaline	56.93085	17.060667	6.2		
+GCA_902517865.1@CABYDT010000004.1_93	SAMEA6070060	North Atlantic			euhaline	31.07	-64.17			

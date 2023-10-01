@@ -1,10 +1,9 @@
 
-snakemake@source("tree_functions.R")
 library(dplyr)
 library(tidyr)
 
 if (interactive()) {
-    tree_file <- "analysis/TAT/root_digger/TwR.mafft.cds.trim.raxml.bestTree.rooted.tree"
+    tree_file <- "analysis/beast2/rootAnnotator_annotatedMCCTree.nexus_fixed"
     gtdb_file <- "analysis/metadata/gtdb_filtered.tsv"
     lanclos_file <- "analysis/metadata/lanclos.tsv"
     oceandna_file <- "analysis/metadata/oceandna_filtered.tsv"
@@ -13,13 +12,35 @@ if (interactive()) {
     aln_file <- "analysis/TAT/rhodopsins.mafft"
     pos_file <- "input/pos.txt"
     ingroup_file <- "input/ingroup.tsv"
+    habitats_file <- "input/habitats.tsv"
+    source("workflow/scripts/tree_functions.R")
+} else {
+    with(snakemake@input, {
+        tree_file <<- tree
+        gtdb_file <<- gtdb
+        lanclos_file <<- lanclos
+        oceandna_file <<- oceandna
+        aln_file <<- aln
+        pos_file <<- pos
+        ingroup_file <<- ingroup
+        habitats_file <<- habitats
+    })
+    with(snakemake@params, {
+        genera <<- genera %>%
+            {setNames(names(.), gsub("g__", "", .))}
+    })
+    output_file <- unlist(snakemake@output)
+    snakemake@source("tree_functions.R")
 }
+habitats <- read.table(habitats_file, sep = "\t", comment.char = "", header = T)
+
 pos <- readLines(pos_file)
 ref <- pos[1]
 dte <- as.numeric(pos[-1])
 
 aln <- read.fasta(aln_file, type = "AA") %>%
-    as.character
+    as.character %>%
+    `names<-`(sub(" .+", "", names(.)))
 
 motifs <- data.frame(res = aln[[ref]]) %>%
     mutate(aln_pos = 1:n()) %>%
@@ -27,9 +48,11 @@ motifs <- data.frame(res = aln[[ref]]) %>%
     filter(1:n() %in% dte) %>%
     pull(aln_pos) %>%
     lapply(aln, `[`, .) %>%
-    lapply(paste, collapse = "") %>%
-    {data.frame(label = names(.), motif = unlist(.))} %>%
-    mutate(label = gsub(" .+", "", label), motif = toupper(motif))
+    lapply(toupper) %>%
+    lapply(t) %>%
+    lapply(data.frame) %>%
+    lapply(setNames, c("D85", "T89", "D96")) %>%
+    bind_rows(.id = "label")
 
 oceandna <- read.table(oceandna_file, sep = "\t", col.names = c("genome", "taxonomy"))
 lanclos <- read.table(lanclos_file, sep = "\t", header = T, fill = T, comment.char = "") %>%
@@ -51,24 +74,29 @@ metadata <- data.frame(label = names(aln)) %>%
     left_join(taxonomy, by = "genome") %>%
     left_join(ingroup, by = c(label = "Accession")) %>%
     left_join(motifs, by = "label") %>%
-    mutate(tree_label = gsub("[@]", "_", label)) %>%
-    distinct(tree_label, .keep_all = T)
+    left_join(habitats, by = "label") %>%
+    distinct(label, .keep_all = T)
 
-tree <- read.tree(tree_file) %>%
-    phangorn::midpoint(node.labels = "support") %>%
+tree <- read.beast(tree_file) %>%
     as_tibble %>%
-    left_join(metadata, by = c(label = "tree_label")) %>%
-    mutate(support = ifelse(node %in% parent & node != parent, label, NA)) %>%
-    # separate(support, into = c("SH_aLRT", "UFboot"), sep = "/", convert = T) %>%
+    left_join(metadata, by = "label") %>%
     add_mrca(clade_label)
 
-p <- ggtree(to_treedata(tree), layout = "rectangular") +
-    # geom_point2(aes(subset = !is.na(UFboot) & UFboot >= 90, x = branch), color = "gray", size = 1) +
-    geom_tippoint(aes(subset = !is.na(Expressed)), color = "red") +
-    geom_tiplab(aes(subset = !is.na(Alias), label = Alias), offset = 0.05) +
-    geom_tiplab(aes(label = motif), align = T, offset = 0.6) +
-    geom_cladelab(mapping = aes(subset = !is.na(clade_label_mrca), node = node, label = clade_label_mrca), align = T, offset = 0.8) +
-    #geom_cladelab(mapping = aes(subset = !is.na(species_mrca), node = node, label = species_mrca), offset = 0.05) +
-    geom_treescale(width = 0.2)
+wrap_float <- function(x) {
+    recode(format(round(x, 2), nsmall = 2), "  NA" = "")
+}
 
-ggsave(output_file, p, width = 3, height = 5)
+p <- ggtree(to_treedata(tree), layout = "rectangular") +
+    geom_text(aes(x = branch, label = wrap_float(posterior)), color = "black", size = 2, vjust = -0.5) +
+    geom_text(aes(x = branch, label = wrap_float(Root_Probability)), color = "red", size = 2, vjust = 1.5) +
+    geom_tippoint(aes(subset = !is.na(Expressed), x = x + 0.025), color = "red") +
+    geom_tippoint(aes(subset = !is.na(type), color = type, x = x + 0.05)) +
+    geom_tiplab(aes(subset = !is.na(Alias), label = Alias), offset = 0.1) +
+    geom_tiplab(aes(label = D85), align = T, offset = 0.4) +
+    geom_tiplab(aes(label = T89), align = T, offset = 0.45) +
+    geom_tiplab(aes(label = D96), align = T, offset = 0.5) +
+    geom_cladelab(mapping = aes(subset = !is.na(clade_label_mrca), node = node, label = clade_label_mrca), align = T, offset = 0.6) +
+    geom_treescale(width = 0.1) +
+    theme(legend.position = "bottom")
+
+ggsave(output_file, p, width = 3.5, height = 3.5)

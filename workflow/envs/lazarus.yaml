@@ -1,0 +1,7 @@
+channels:
+ - conda-forge
+ - bioconda
+ - hcc
+dependencies:
+ - python=2.7
+ - project-lazarus=2014.04.09

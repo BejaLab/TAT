@@ -1,0 +1,4 @@
+dependencies:
+ - pip
+ - pip:
+   - "--editable=git+https://github.com/harmslab/topiary.git@86913d42417bf45ca262e7740672c61a3ed85455#egg=topiary-asr"

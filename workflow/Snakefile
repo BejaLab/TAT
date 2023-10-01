@@ -174,16 +174,16 @@ rule collect_diamond:
     script:
         "scripts/collect_diamond.R"
 
-rule get_TAT:
+rule get_rhodopsins:
     input:
         tsv = expand("analysis/diamond_collect/{source}.tsv", source = sources),
         fasta = chosen_faa_IIIa
     output:
-        "analysis/TAT/genomes.{ext}"
+        "analysis/{family}/genomes.{ext}"
     conda:
         "envs/tools.yaml"
     shell:
-        "grep -h TAT {input.tsv} | parallel --colsep \\\\t seqkit grep -p {{3}} analysis/proteins/*/{{1}}.{wildcards.ext} \| seqkit replace -p ^ -r {{1}}@ > {output}"
+        "awk -vf={wildcards.family} '$2==f' {input.tsv} | parallel --colsep \\\\t -k seqkit grep -p {{3}} analysis/proteins/*/{{1}}.{wildcards.ext} \| seqkit replace -p ^ -r {{1}}@ > {output}"
 
 rule translate_ingroup:
     input:
@@ -197,25 +197,26 @@ rule translate_ingroup:
 
 rule cat_TAT:
     input:
-        "analysis/TAT/ingroup.faa",
-        "analysis/TAT/genomes.cdhit"
+        ingroup = "analysis/TAT/ingroup.faa",
+        genomes = "analysis/TAT/genomes.faa"
     output:
-        "analysis/TAT/TwR.faa"
+        "analysis/TAT/genomes_nonred.faa"
     params:
-        m = 220
+        m = 240,
+        seed = 123
     conda:
         "envs/tools.yaml"
     shell:
-        "seqkit seq -im {params.m} {input} | seqkit rmdup | seqkit rmdup -s -o {output}"
+        "seqkit seq -im {params.m} {input.ingroup} {input.genomes} | seqkit rmdup -s | seqkit rmdup | seqkit grep -vf <(seqkit seq -ni {input.ingroup}) | seqkit shuffle -s {params.seed} -o {output}"
 
 rule cdhit_TAT:
     input:
-        "analysis/TAT/genomes.faa"
+        "analysis/TAT/genomes_nonred.faa"
     output:
         faa = "analysis/TAT/genomes.cdhit",
         clstr = "analysis/TAT/genomes.cdhit.clstr"
     params:
-        c = 0.98
+        c = 0.95
     conda:
         "envs/cdhit.yaml"
     shell:
@@ -223,24 +224,27 @@ rule cdhit_TAT:
 
 rule mafft_TAT:
     input:
-        "analysis/TAT/TwR.faa"
+        "analysis/TAT/ingroup.faa",
+        "analysis/TAT/genomes.cdhit"
     output:
         "analysis/TAT/TwR.mafft"
     conda:
         "envs/mafft.yaml"
     shell:
-        "mafft --reorder --localpair --maxiterate 1000 {input} > {output}"
+        "cat {input} | mafft --reorder --localpair --maxiterate 1000 - > {output}"
 
-rule mafft_rhodopsins:
+rule mafft_all:
     input:
-        "analysis/TAT/TwR.faa",
+        "analysis/TAT/ingroup.faa",
+        "analysis/TAT/genomes.faa",
+        "analysis/PR/genomes.faa",
         "input/outgroups.faa"
     output:
         "analysis/TAT/rhodopsins.mafft"
     conda:
         "envs/mafft.yaml"
     shell:
-        "cat {input} | mafft --reorder --localpair --maxiterate 1000 - > {output}"
+        "cat {input} | mafft --reorder --auto - > {output}"
 
 rule cat_cds:
     input:
@@ -266,7 +270,7 @@ rule codon_trim:
     input:
         "analysis/TAT/TwR.mafft.cds"
     output:
-        "analysis/TAT/TwR.mafft.cds.trim_unfixednames"
+        "analysis/TAT/TwR.mafft.cds.trim"
     params:
         gt = 0.5
     conda:
@@ -274,13 +278,32 @@ rule codon_trim:
     shell:
         "trimal -in {input} -out {output} -gt {params.gt}"
 
-rule fix_names:
+rule fasta_to_nexus:
     input:
-        "analysis/TAT/TwR.mafft.cds.trim_unfixednames"
-    output:
         "analysis/TAT/TwR.mafft.cds.trim"
+    output:
+        "analysis/TAT/TwR.mafft.cds.trim.codons12.nex"
+    params:
+        codons = [ 1, 2 ]
+    conda:
+        "envs/biopython.yaml"
+    script:
+        "scripts/fasta_to_nexus.py"
+
+rule iqtree_codon12:
+    input:
+        "analysis/TAT/TwR.mafft.cds.trim.codons12.nex"
+    output:
+        "analysis/TAT/TwR.mafft.cds.trim.codons12.nex.treefile"
+    params:
+        seed = 123,
+        B = 1000
+    conda:
+        "envs/iqtree.yaml"
+    threads:
+        2
     shell:
-        "tr @ _ < {input} > {output}"
+        "iqtree2 -seed {params.seed} -p {input} -B {params.B} -T {threads} -redo"
 
 rule codon_iqtree:
     input:
@@ -296,45 +319,6 @@ rule codon_iqtree:
         "envs/iqtree.yaml"
     shell:
         "iqtree2 -seed {params.seed} -s {input} -st CODON -B {params.B} -T {threads} -redo"
-
-rule root_digger:
-    input:
-        fasta = "analysis/TAT/TwR.mafft.cds.trim",
-        tree  = "analysis/TAT/TwR.mafft.cds.trim.raxml.bestTree",
-        model = "analysis/TAT/TwR.mafft.cds.trim.raxml.bestModel"
-    output:
-        "analysis/TAT/root_digger/TwR.mafft.cds.trim.raxml.bestTree.lwr.tree",
-        "analysis/TAT/root_digger/TwR.mafft.cds.trim.raxml.bestTree.rooted.tree"
-    params:
-        dir = "analysis/TAT/root_digger"
-    threads:
-        30
-    shadow:
-        "minimal"
-    log:
-        "analysis/TAT/root_digger/TwR.mafft.cds.trim.raxml.bestTree.log"
-    shell:
-        """
-        rd --msa {input.fasta} --tree {input.tree} --exhaustive --threads {threads} &> {log}
-        mv {input.tree}.lwr.tree {input.tree}.rooted.tree {params.dir}/
-        """
-
-rule raxml_evaluate:
-    input:
-        fasta  = "analysis/TAT/TwR.mafft.cds.trim",
-        iqtree = "analysis/TAT/TwR.mafft.cds.trim.treefile"
-    output:
-        "analysis/TAT/TwR.mafft.cds.trim.raxml.bestTree",
-        "analysis/TAT/TwR.mafft.cds.trim.raxml.bestModel"
-    params:
-        seed = 123,
-        model = "GTR+G"
-    log:
-        "analysis/TAT/TwR.mafft.cds.trim.raxml.log"
-    conda:
-        "envs/raxml-ng.yaml"
-    shell:
-        "raxml-ng --redo --evaluate --msa {input.fasta} --tree {input.iqtree} --model {params.model} --seed {params.seed} &> {log}"
 
 rule trimal_rhodopsins:
     input:
