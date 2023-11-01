@@ -1,0 +1,38 @@
+<itsabeastystatewerein version='2.0' sample='10000000'>
+<statenode id='Tree.t:codon12'>((((0:0.03329290972426246,(1:0.00871328822787044,2:0.00871328822787044)19:0.024579621496392017)31:0.138969616079858,(((3:0.03771340411590361,4:0.03771340411590361)25:0.048352497757631355,(5:0.0038512777104579574,6:0.0038512777104579574)28:0.08221462416307701)32:0.06843557114327434,(7:0.07403683867252107,8:0.07403683867252107)20:0.08046463434428823)18:0.01776105278731116)27:0.16042936229535662,(9:0.009834798438158229,10:0.009834798438158229)26:0.3228570896613189)30:0.032681751019920324,((11:0.03461377099548211,(12:0.007757523262384972,13:0.007757523262384972)23:0.02685624773309714)33:0.19233275754719606,(((14:0.009279233079161479,15:0.009279233079161479)22:0.009154312515459928,16:0.018433545594621407)21:0.13042426966290893,17:0.14885781525753033)24:0.07808871328514783)29:0.13842711057671925)34:0.0</statenode>
+<statenode id='birthRate.t:codon12'>birthRate.t:codon12[1 1] (0.0,Infinity): 7.184322395048319 </statenode>
+<statenode id='Indicators.c:codon12'>Indicators.c:codon12[34 1] (null,true): true false false false false false false false false false false true false false false false false false false false false false false false false false false false false false false false false false </statenode>
+<statenode id='clockrates.c:codon12'>clockrates.c:codon12[34 1] (1.0E-9,1.7976931348623157E308): 0.11785582979087014 0.9406151724948056 0.31861038484683035 2.3705219567348452 0.0912767908231033 2.8799976329862225 0.8337998176366598 0.0079499257266043 0.04448260978816598 0.5364248713438406 0.47449470392695553 4.807993753021121 0.01095872903130294 0.09184149938618585 1.0379297711592694 0.46005382192066885 0.5193860774553228 0.09301586091958619 2.935588349159222 0.45627564109493074 0.01784399190952043 0.16609055401573494 0.3855794441567612 0.27983856052657174 0.3565120936953018 0.05034298076808592 0.18802661844043245 0.015167710733137536 0.05219252687176045 3.95507185566151 0.44241042242234935 0.9929483541662681 3.949176705192438 0.5427672495741915 </statenode>
+<statenode id='BMT_ModelIndicator.s:codon12'>BMT_ModelIndicator.s:codon12[1 1] (0,5): 26 </statenode>
+<statenode id='BMT_Rates.s:codon12'>BMT_Rates.s:codon12[6 1] (0.01,100.0): 0.48496245404050065 1.6285460621565793 0.3693553729704096 1.2102019028742723 0.6783881458016587 0.4387233946718594 </statenode>
+<statenode id='BMT_gammaShape.s:codon12'>BMT_gammaShape.s:codon12[1 1] (0.001,1000.0): 0.4394931851277724 </statenode>
+<statenode id='BMT_ProportionInvariable.s:codon12'>BMT_ProportionInvariable.s:codon12[1 1] (0.0,1.0): 0.07436403381236113 </statenode>
+<statenode id='hasInvariableSites.s:codon12'>hasInvariableSites.s:codon12[1 1] (-2147483647,2147483646): 0 </statenode>
+<statenode id='hasGammaRates.s:codon12'>hasGammaRates.s:codon12[1 1] (-2147483647,2147483646): 1 </statenode>
+<statenode id='hasEqualFreqs.s:codon12'>hasEqualFreqs.s:codon12[1 1] (null,true): false </statenode>
+<statenode id='BMT_frequencies.s:codon12'>BMT_frequencies.s:codon12[4 1] (-Infinity,Infinity): 0.3302869349437829 0.1939741399092199 0.13980873131538654 0.33593019383161304 </statenode>
+</itsabeastystatewerein>
+<!--
+{"operators":[
+{"id":"YuleBirthRateScaler.t:codon12","p":0.5503563240424287,"accept":80303,"reject":188817,"acceptFC":80230,"rejectFC":188477,"rejectIv":0,"rejectOp":0},
+{"id":"YuleModelTreeRootScaler.t:codon12","p":0.1638734217749426,"accept":57968,"reject":211262,"acceptFC":57954,"rejectFC":210901,"rejectIv":59104,"rejectOp":59104},
+{"id":"YuleModelUniformOperator.t:codon12","p":1.0234442358633817,"accept":833776,"reject":1860012,"acceptFC":830275,"rejectFC":1859523,"rejectIv":0,"rejectOp":0},
+{"id":"YuleModelSubtreeSlide.t:codon12","p":0.25411590887453994,"accept":2376,"reject":1344609,"acceptFC":2328,"rejectFC":1342586,"rejectIv":654065,"rejectOp":654065},
+{"id":"YuleModelNarrow.t:codon12","p":"NaN","accept":61744,"reject":1282626,"acceptFC":61611,"rejectFC":1280704,"rejectIv":0,"rejectOp":0},
+{"id":"YuleModelWide.t:codon12","p":"NaN","accept":431,"reject":267412,"acceptFC":427,"rejectFC":266993,"rejectIv":138060,"rejectOp":138060},
+{"id":"YuleModelWilsonBalding.t:codon12","p":"NaN","accept":385,"reject":267960,"acceptFC":382,"rejectFC":267579,"rejectIv":50801,"rejectOp":50801},
+{"id":"YuleModelBICEPSEpochTop.t:codon12","p":0.1782906321797907,"accept":62871,"reject":117260,"acceptFC":62735,"rejectFC":117109,"rejectIv":56833,"rejectOp":56833},
+{"id":"YuleModelBICEPSEpochAll.t:codon12","p":0.18594597849445582,"accept":59439,"reject":119641,"acceptFC":59287,"rejectFC":119476,"rejectIv":56594,"rejectOp":56594},
+{"id":"YuleModelBICEPSTreeFlex.t:codon12","p":0.12147407591014435,"accept":76154,"reject":103542,"acceptFC":75929,"rejectFC":103499,"rejectIv":0,"rejectOp":0},
+{"id":"IndicatorsBitFlip.c:codon12","p":"NaN","accept":37240,"reject":1308096,"acceptFC":37139,"rejectFC":1306192,"rejectIv":0,"rejectOp":0},
+{"id":"ClockRateScaler.c:codon12","p":3.83225296576117,"accept":437683,"reject":905415,"acceptFC":435795,"rejectFC":905335,"rejectIv":2954,"rejectOp":128},
+{"id":"BMT_ModelTestOperator.s:codon12","p":"NaN","accept":10470,"reject":78737,"acceptFC":10443,"rejectFC":78633,"rejectIv":1431,"rejectOp":1431},
+{"id":"BMT_Ratescaler.s:codon12","p":0.46319750520005637,"accept":21981,"reject":67164,"acceptFC":21884,"rejectFC":67115,"rejectIv":3243,"rejectOp":3243},
+{"id":"BMT_gammaShapeScaler.s:codon12","p":0.493059497992578,"accept":11278,"reject":33888,"acceptFC":11258,"rejectFC":33841,"rejectIv":0,"rejectOp":0},
+{"id":"BMT_ProportionInvariableScaler.s:codon12","p":0.3129619427623167,"accept":8229,"reject":36524,"acceptFC":8225,"rejectFC":36460,"rejectIv":20832,"rejectOp":20832},
+{"id":"BMT_hasGammaRatesFlipper.s:codon12","p":"NaN","accept":0,"reject":8893,"acceptFC":0,"rejectFC":8876,"rejectIv":4424,"rejectOp":4424},
+{"id":"BMT_hasInvariableSitesFlipper.s:codon12","p":"NaN","accept":1159,"reject":7871,"acceptFC":1158,"rejectFC":7862,"rejectIv":4495,"rejectOp":4495},
+{"id":"BMT_FreqsFlipOperator.s:codon12","p":"NaN","accept":4,"reject":9011,"acceptFC":1,"rejectFC":8999,"rejectIv":0,"rejectOp":0},
+{"id":"BMT_FrequenciesExchanger.s:codon12","p":0.024802218525999023,"accept":4242,"reject":13528,"acceptFC":4211,"rejectFC":13527,"rejectIv":0,"rejectOp":0}
+]}
+-->

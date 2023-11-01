@@ -1,17 +1,16 @@
 
 configfile: "config.yaml"
 
-xmls ,= glob_wildcards("analysis/beast2/{xml}.xml")
-xmls = [ "beast_linked_models" ]
+chosen_xml = "beast_linked_models"
 
 rule all:
     input:
-        expand("output/rhodopsin_tree-{xml}.pdf", xml = xmls),
+        "output/rhodopsin_tree-{xml}.pdf".format(xml = chosen_xml),
         "output/lazarus.pdf"
 
 rule beast:
     input:
-        "analysis/beast2/{xml}.xml"
+        "input/beast2/{xml}.xml"
     output:
         "analysis/beast2/{xml}-codon12.trees",
         "analysis/beast2/{xml}.xml.state"
@@ -64,7 +63,7 @@ rule cp_fasta:
 rule lazarus:
     input:
         fasta = "analysis/lazarus/TwR.mafft.fasta",
-        tree = "analysis/beast2/beast_linked_models.raxml.bestTree.rooted"
+        tree = "analysis/beast2/{xml}.raxml.bestTree.rooted".format(xml = chosen_xml)
     output:
         directory("analysis/lazarus/tree1/")
     params:
