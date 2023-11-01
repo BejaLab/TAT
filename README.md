@@ -27,4 +27,4 @@ Final output files are in the folder `output`. Immediate analysis results needed
 * `analysis/beast2/beast_linked_models-rootAnnotator_annotatedMCCTree.nexus_fixed` -- (fixed) output of rootAnnotator, tree in nexus format
 * `analysis/lazarus` -- lazarus analysis
 
-Use [Issue tracker][https://github.com/BejaLab/TAT/issues] for questions/requests.
+Use [Issue tracker](https://github.com/BejaLab/TAT/issues) for questions/requests.
