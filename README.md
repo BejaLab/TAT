@@ -14,17 +14,25 @@ Most of the dependencies of the main workflow pipilene are taken care of with [c
 
 ## Files in this repository
 
-The workflow files are located in `workflow`. Input files to run the pipeline(s) from scretch are in `input`.
+**The protein fasta file with the expressed TwRs is provided in file `Expressed_TwRs.faa`.**
+
+The workflow files are located in `workflow`.
+
+Input files to run the pipeline(s) from scretch are in `input`. The input files include:
+
+* `input/ingroup.fna` -- ORF sequences for the representative TwRs
+* `input/ingroup.tsv` -- metadata for the representivatie TwRs
+* `input/beast2/beast_linked_models.xml` -- input for beast2 including the CDS alignment
 
 Final output files are in the folder `output`. Immediate analysis results needed to produce them are included as well:
 
+* `analysis/TAT/rhodopsins.mafft` -- fasta files with alignment of all of the collected and reference rhodopsins
 * `analysis/IIIa_phylophlan/IIIa.tre.treefile` -- results of phylogenetic analysis of Pelagibacterales subclade IIIa
 * `analysis/diamond_collect/{gtdb,lanclos,oceandna}.tsv` -- tsv files summarizing presence of rhodopsins in Pelagibacterales genomes obtained from three sources
-* `analysis/TAT/rhodopsins.mafft` -- fasta files with alignment of all of the collected rhodopsins
 * `analysis/metadata/{gtdb_filtered,lanclos,oceandna_filtered}.tsv` -- metadata for the analyzed Pelagibacterales genomes
 * `analysis/metadata/gtdb_clade.nwk` -- tree in newick format corresponding to the o\_\_Pelagibacterales clade in GTDB r. 214.1
 * `analysis/beast2/{beast_linked_models-codon12.trees,beast_linked_models.xml.state,beast_linked_models.log}` -- results of the beast2 run
 * `analysis/beast2/beast_linked_models-rootAnnotator_annotatedMCCTree.nexus_fixed` -- (fixed) output of rootAnnotator, tree in nexus format
 * `analysis/lazarus` -- lazarus analysis
 
-Use [Issue tracker](https://github.com/BejaLab/TAT/issues) for questions/requests.
+Use the [Issue tracker](https://github.com/BejaLab/TAT/issues) for questions/requests.
