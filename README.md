@@ -1,6 +1,6 @@
 # TAT-like or Twin-peaked rhodopsins
 
-This repository contains code ana analysis results used in the paper Mannen et al (2023) [Multiple roles of a conserved glutamate residue for unique biophysical properties in a new group of microbial rhodopsins homologous to TAT rhodopsin](https://doi.org/10.1016/j.jmb.2023.168331).
+This repository contains code and analysis results used in the paper Mannen et al (2023) [Multiple roles of a conserved glutamate residue for unique biophysical properties in a new group of microbial rhodopsins homologous to TAT rhodopsin](https://doi.org/10.1016/j.jmb.2023.168331).
 
 The workflow is divided into two parts: most of the analyses are covered by the default [snakemake](https://snakemake.readthedocs.io/) file `workflow/Snakefile` while the [beast2](https://www.beast2.org/) analysis is in `workflow/Beast2.snakefile`.
 
@@ -14,11 +14,11 @@ Most of the dependencies of the main workflow pipilene are taken care of with [c
 
 ## Files in this repository
 
-**The protein fasta file with the expressed TwRs is provided in file `Expressed_TwRs.faa`.**
+**The protein fasta file with the expressed TwRs is provided in the file `Expressed_TwRs.faa`.**
 
-The workflow files are located in `workflow`.
+The workflow files are located in `workflow/`.
 
-Input files to run the pipeline(s) from scretch are in `input`. The input files include:
+Input files to run the pipeline(s) from scratch are in `input/`. They include:
 
 * `input/ingroup.fna` -- ORF sequences for the representative TwRs
 * `input/ingroup.tsv` -- metadata for the representivatie TwRs
