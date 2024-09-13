@@ -1,7 +1,7 @@
 channels:
  - conda-forge
  - bioconda
-depenencies:
+dependencies:
  - r-base=4.1
  - r-phangorn=2.4.0
  - r-ape=5.7
